@@ -1,3 +1,7 @@
-'use strict';
+"use strict";
 
-module.exports = {};
+const transcript = require("./transcript");
+
+module.exports = {
+  transcript: { schema: transcript },
+};

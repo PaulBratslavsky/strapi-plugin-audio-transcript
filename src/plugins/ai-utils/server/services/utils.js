@@ -1,27 +1,66 @@
 const YTDL = require("@yohancolla/ytdl");
+const path = require("path");
+const fs = require("fs");
 
 module.exports = ({ strapi }) => ({
-  async downloadAudioFile(videoId, path) {
-    console.log("Downloading Audio file...");
+  async downloadAudioFile(videoId, directoryPath) {
+    console.log("Downloading Audio file to path...", directoryPath);
 
     const ytdl = new YTDL({
-      outputPath: path, // Output file location (default: the home directory)
-      queueParallelism: 2, // Download parallelism (default: 1)
-      progressTimeout: 2000, // Interval in ms for the progress reports (default: 1000)
-      deleteTimeout: 60, // Interval in seconds for delete the file (default: 0 [no delete])
+      outputPath: directoryPath,
+      queueParallelism: 2,
+      progressTimeout: 2000,
+      deleteTimeout: 60,
     });
 
     const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
 
-    ytdl.toMp3(videoUrl, "highestaudio");
-
     return new Promise((resolve, reject) => {
-      ytdl.on("finish", () => {
-        console.log("Download completed");
-        resolve(path);
+      // Assuming toMp3 function accepts the video URL and quality directly
+      ytdl.toMp3(videoUrl, "highestaudio");
+
+      ytdl.on("finish", (err, data) => {
+        if (err) {
+          console.error("Download error:", err);
+          return reject(err);
+        }
+        console.log("Download completed:", data);
+        // Optionally verify the file here again if necessary
+        resolve(data.output);
       });
-      ytdl.on("progress", (progress) => console.log(JSON.stringify(progress)));
-      ytdl.on("error", reject);
+
+      ytdl.on("error", (error) => {
+        console.error("Error during download:", error);
+        reject(error);
+      });
+
+      ytdl.on("progress", (progress) => {
+        console.log("Download progress:", JSON.stringify(progress));
+      });
     });
   },
 });
+
+
+
+// JSON.stringify(progress)
+
+
+
+/*
+
+fs.stat(downloadFilePath, (err, stats) => {
+  if (err) {
+    // Handle error (file might not exist or other errors)
+    return reject(err);
+  }
+  if (stats.size > 0) {
+    // File exists and is not empty
+    resolve(downloadFilePath);
+  } else {
+    // File exists but is empty, may need to handle this case
+    reject(new Error("File exists but is empty"));
+  }
+});
+
+*/
